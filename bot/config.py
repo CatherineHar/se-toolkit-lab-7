@@ -49,7 +49,8 @@ def validate_config(settings: BotSettings, test_mode: bool = False) -> list[str]
     if not test_mode and not settings.bot_token:
         errors.append("BOT_TOKEN is required for Telegram mode")
 
-    if not settings.lms_api_key:
+    # LMS_API_KEY only required in Telegram mode (test mode uses placeholders)
+    if not test_mode and not settings.lms_api_key:
         errors.append("LMS_API_KEY is required")
 
     return errors

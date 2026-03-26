@@ -2,15 +2,20 @@
 
 import os
 from functools import lru_cache
+from pathlib import Path
 
 from pydantic_settings import BaseSettings, SettingsConfigDict
+
+# Find .env.bot.secret in parent directory (repo root)
+BASE_DIR = Path(__file__).resolve().parent
+ENV_FILE = str(BASE_DIR.parent / ".env.bot.secret")
 
 
 class BotSettings(BaseSettings):
     """Bot configuration loaded from environment variables."""
 
     model_config = SettingsConfigDict(
-        env_file=".env.bot.secret",
+        env_file=ENV_FILE,
         env_file_encoding="utf-8",
         extra="ignore",
     )

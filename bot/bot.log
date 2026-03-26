@@ -1,0 +1,2 @@
+nohup: ignoring input
+Configuration errors: ['BOT_TOKEN is required for Telegram mode', 'LMS_API_KEY is required']

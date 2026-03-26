@@ -29,6 +29,8 @@ class BotSettings(BaseSettings):
 
     # LLM API (for intent routing)
     llm_api_key: str = ""
+    llm_api_base_url: str = ""
+    llm_api_model: str = "coder-model"
 
     # Test mode flag (set via CLI, not env)
     test_mode: bool = False

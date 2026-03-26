@@ -91,3 +91,108 @@ By the end of this lab, you should be able to say:
 2. [Backend Integration](./lab/tasks/required/task-2.md) — P0: slash commands + real data
 3. [Intent-Based Natural Language Routing](./lab/tasks/required/task-3.md) — P1: LLM tool use
 4. [Containerize and Document](./lab/tasks/required/task-4.md) — P3: containerize + deploy
+
+## Deploy
+
+### Prerequisites
+
+Before deploying the bot, ensure you have:
+
+1. **Backend running** — The bot depends on the LMS backend being available
+2. **Environment variables configured** — See `.env.docker.secret` for required values
+
+### Required Environment Variables
+
+| Variable | Description | Example |
+|----------|-------------|---------|
+| `BOT_TOKEN` | Telegram bot token from @BotFather | `123456789:ABCdefGHIjklMNOpqrsTUVwxyz` |
+| `LMS_API_KEY` | LMS backend API key | `my-secret-api-key` |
+| `LLM_API_KEY` | LLM API key for intent routing | `my-secret-llm-key` |
+| `LLM_API_BASE_URL` | LLM API base URL | `http://localhost:42005/v1` |
+| `LLM_API_MODEL` | LLM model name | `coder-model` |
+| `BACKEND_CONTAINER_PORT` | Backend container port (for Docker networking) | `8000` |
+
+### Deploy Commands
+
+1. **Build the bot image (requires host network for DNS):**
+
+   ```bash
+   cd ~/se-toolkit-lab-7
+   DOCKER_BUILDKIT=1 docker build --network host -t se-toolkit-lab-7-bot -f bot/Dockerfile .
+   ```
+
+2. **Build and start all services (including bot):**
+
+   ```bash
+   docker compose --env-file .env.docker.secret up -d bot
+   ```
+
+3. **View bot logs:**
+
+   ```bash
+   docker compose logs -f bot
+   ```
+
+4. **Restart the bot:**
+
+   ```bash
+   docker compose --env-file .env.docker.secret restart bot
+   ```
+
+5. **Stop the bot:**
+
+   ```bash
+   docker compose --env-file .env.docker.secret stop bot
+   ```
+
+### Verify Deployment
+
+1. **Check container status:**
+
+   ```bash
+   docker compose ps | grep bot
+   ```
+
+   Expected output:
+   ```
+   se-toolkit-lab-7-bot-1   ...   Up
+   ```
+
+2. **Test in Telegram:**
+   - Open your bot in Telegram
+   - Send `/start` — should receive welcome message with inline buttons
+   - Send `/health` — should show backend status
+   - Send `/labs` — should list available labs
+   - Send `show me scores for lab 4` — should show score distribution (natural language)
+
+3. **Check bot logs for errors:**
+
+   ```bash
+   docker compose logs bot | tail -50
+   ```
+
+### Troubleshooting
+
+| Issue | Solution |
+|-------|----------|
+| Bot doesn't start | Check `BOT_TOKEN` is valid in `.env.docker.secret` |
+| "Backend error" in /health | Ensure backend container is running: `docker compose ps backend` |
+| LLM not responding | Verify `LLM_API_BASE_URL` and `LLM_API_KEY` are correct |
+| Container exits immediately | Check logs: `docker compose logs bot` |
+
+### Architecture
+
+```
+┌─────────────────┐     ┌─────────────────┐     ┌─────────────────┐
+│   Telegram      │────▶│  Bot Container  │────▶│  Backend        │
+│   (external)    │◀────│  (aiogram)      │◀───▶│  (FastAPI)      │
+└─────────────────┘     └────────┬────────┘     └─────────────────┘
+                                 │
+                                 ▼
+                        ┌─────────────────┐
+                        │  LLM Service    │
+                        │  (intent router)│
+                        └─────────────────┘
+```
+
+The bot runs in the `lms-network` Docker network, allowing it to reach the backend at `http://backend:8000` (not localhost).

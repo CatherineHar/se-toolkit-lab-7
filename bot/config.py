@@ -6,9 +6,17 @@ from pathlib import Path
 
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
-# Find .env.bot.secret in parent directory (repo root)
+# Find .env.bot.secret in parent directory (repo root) or current directory (Docker)
 BASE_DIR = Path(__file__).resolve().parent
-ENV_FILE = str(BASE_DIR.parent / ".env.bot.secret")
+ENV_FILE = BASE_DIR.parent / ".env.bot.secret"
+
+# Fallback to current directory for Docker deployment
+if not ENV_FILE.exists():
+    ENV_FILE = Path("/app/.env.bot.secret")
+    if not ENV_FILE.exists():
+        ENV_FILE = BASE_DIR / ".env.bot.secret"
+
+ENV_FILE = str(ENV_FILE)
 
 
 class BotSettings(BaseSettings):
